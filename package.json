@@ -1,6 +1,6 @@
 {
   "name": "@nestjs-steroids/async-context",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "NestJS Async Context based on async_hooks",
   "author": "Vlad Krokhin",
   "private": false,

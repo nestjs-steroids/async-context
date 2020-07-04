@@ -9,10 +9,6 @@
   </a>
 </p>
 
-## Thinks TODO:
-- [ ] Setup CI/CD (Github Actions or Circle)
-- [ ] Add tests
-
 ## Installation
 ```bash
 npm install @nestjs-steroids/async-context
@@ -170,3 +166,6 @@ export class AppController {
 
 ## License
 [MIT](LICENSE.md)
+
+## Thinks TODO:
+- [ ] Add tests
