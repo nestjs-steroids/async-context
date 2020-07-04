@@ -1,12 +1,27 @@
 {
-  "name": "async-context",
+  "name": "@nestjs-steroids/async-context",
   "version": "0.0.1",
   "description": "NestJS Async Context based on async_hooks",
   "author": "Vlad Krokhin",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nestjs-steroids/async-context"
+  },
+  "keywords": [
+    "nest",
+    "nestjs",
+    "async-context",
+    "async-hooks"
+  ],
+  "files": [
+    "dist",
+    "index.js",
+    "index.d.ts"
+  ],
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build",
+    "build": "tsc -p tsconfig.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -19,15 +34,17 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
-  "dependencies": {
+  "peerDependencies": {
+    "@nestjs/common": ">=7.0.0",
+    "@nestjs/core": ">=7.0.0"
+  },
+  "devDependencies": {
     "@nestjs/common": "^7.0.0",
     "@nestjs/core": "^7.0.0",
     "@nestjs/platform-express": "^7.0.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^6.5.4"
-  },
-  "devDependencies": {
+    "rxjs": "^6.5.4",
     "@nestjs/cli": "^7.0.0",
     "@nestjs/schematics": "^7.0.0",
     "@nestjs/testing": "^7.0.0",
