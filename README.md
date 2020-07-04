@@ -1,7 +1,15 @@
-# Async Context
+<h1 align="center">Async Context</h1>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@nestjs-steroids/async-context">
+    <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/nestjs-steroids/async-context">
+  </a>
+  <a href="https://snyk.io/test/github/nestjs-steroids/async-context?targetFile=package.json">
+    <img src="https://snyk.io/test/github/nestjs-steroids/async-context/badge.svg?targetFile=package.json" alt="Known Vulnerabilities" data-canonical-src="https://snyk.io/test/github/nestjs-steroids/async-context?targetFile=package.json" style="max-width:100%;">
+  </a>
+</p>
 
 ## Thinks TODO:
-- [ ] Add fancy [badges](https://shields.io/)
 - [ ] Setup CI/CD (Github Actions or Circle)
 - [ ] Add tests
 
