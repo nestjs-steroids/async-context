@@ -160,3 +160,6 @@ export class AppController {
 [Nest] 30483   - 07/04/2020, 12:21:11 PM   [1cf8ad02-7bae-4fa7-963d-66238c94abd3] AppController.getHello -> nextTick
 [Nest] 30483   - 07/04/2020, 12:21:11 PM   [1cf8ad02-7bae-4fa7-963d-66238c94abd3] AppController.getHello -> nextTick -> setTimeout
 ```
+
+## License
+[MIT](LICENSE.md)
