@@ -1,6 +1,6 @@
 {
   "name": "@nestjs-steroids/async-context",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "NestJS Async Context based on async_hooks",
   "author": "Vlad Krokhin",
   "license": "MIT",
@@ -15,10 +15,9 @@
     "async-hooks"
   ],
   "files": [
-    "dist",
-    "index.js",
-    "index.d.ts"
+    "dist"
   ],
+  "main": "dist/index.js",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.json",
