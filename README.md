@@ -1,9 +1,8 @@
-# WIP: Async Context
+# Async Context
 
 ## Thinks TODO:
-- [ ] Publish to NPM
+- [ ] Add fancy [badges](https://shields.io/)
 - [ ] Setup CI/CD (Github Actions or Circle)
-- [ ] Add fancy [badges](shields.io)
 - [ ] Add tests
 
 ## Installation
