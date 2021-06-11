@@ -1,8 +1,8 @@
-import { AsyncHook, createHook, HookCallbacks } from 'async_hooks';
+import { createHook, HookCallbacks } from 'async_hooks';
 import { AsyncHooksStorage } from './async-hooks-storage';
 
 export class AsyncHooksHelper {
-  static createHooks(storage: AsyncHooksStorage): AsyncHook {
+  static createHooks(storage: AsyncHooksStorage) {
     function init(asyncId: number, type: string, triggerId: number) {
       if (storage.has(triggerId)) {
         storage.inherit(asyncId, triggerId);

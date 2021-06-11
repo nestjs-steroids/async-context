@@ -1,26 +1,30 @@
-export class AsyncHooksStorage {
-  constructor(private readonly asyncStorage = new Map<number, unknown>()) {
+import { KeyOfMap, AsyncStorageMap } from './async-context.interfaces';
+
+export class AsyncHooksStorage<
+  StorageMap extends AsyncStorageMap = AsyncStorageMap
+> {
+  constructor(private readonly asyncStorage = new Map() as StorageMap) {
     this.initialize();
   }
 
-  get<T = any>(triggerId: number): T {
-    return this.asyncStorage.get(triggerId) as T;
+  get(triggerId: KeyOfMap<StorageMap>) {
+    return this.asyncStorage.get(triggerId);
   }
 
-  has(triggerId: number): boolean {
+  has(triggerId: KeyOfMap<StorageMap>) {
     return this.asyncStorage.has(triggerId);
   }
 
-  inherit(asyncId: number, triggerId: number) {
+  inherit(asyncId: KeyOfMap<StorageMap>, triggerId: KeyOfMap<StorageMap>) {
     const value = this.asyncStorage.get(triggerId);
     this.asyncStorage.set(asyncId, value);
   }
 
-  delete(asyncId: number) {
+  delete(asyncId: KeyOfMap<StorageMap>) {
     this.asyncStorage.delete(asyncId);
   }
 
-  getInternalStorage(): Map<number, unknown> {
+  getInternalStorage() {
     return this.asyncStorage;
   }
 
