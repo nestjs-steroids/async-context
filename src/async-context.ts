@@ -2,16 +2,23 @@ import { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import * as asyncHooks from 'async_hooks';
 import { AsyncHooksHelper } from './async-hooks-helper';
 import { AsyncHooksStorage } from './async-hooks-storage';
+import {
+  AsyncContextStorageData,
+  AsyncStorageMap,
+} from './async-context.interfaces';
 
-export class AsyncContext implements OnModuleInit, OnModuleDestroy {
+export class AsyncContext<
+  T extends AsyncContextStorageData = AsyncContextStorageData,
+  M extends AsyncStorageMap = AsyncStorageMap
+> implements OnModuleInit, OnModuleDestroy {
   private static instance: AsyncContext;
 
   private constructor(
-    private readonly internalStorage: Map<number, any>,
+    private readonly internalStorage: M,
     private readonly asyncHookRef: asyncHooks.AsyncHook,
   ) {}
 
-  static getInstance(): AsyncContext {
+  static getInstance() {
     if (!this.instance) {
       this.initialize();
     }
@@ -26,14 +33,14 @@ export class AsyncContext implements OnModuleInit, OnModuleDestroy {
     this.asyncHookRef.disable();
   }
 
-  set<TKey = any, TValue = any>(key: TKey, value: TValue) {
+  set<K extends keyof T>(key: K, value: T[K]) {
     const store = this.getAsyncStorage();
     store.set(key, value);
   }
 
-  get<TKey = any, TReturnValue = any>(key: TKey): TReturnValue {
+  get(key: keyof T) {
     const store = this.getAsyncStorage();
-    return store.get(key) as TReturnValue;
+    return store.get(key);
   }
 
   register() {
@@ -41,7 +48,7 @@ export class AsyncContext implements OnModuleInit, OnModuleDestroy {
     this.internalStorage.set(eid, new Map());
   }
 
-  private getAsyncStorage(): Map<unknown, unknown> {
+  private getAsyncStorage<K extends keyof T>() {
     const eid = asyncHooks.executionAsyncId();
     const state = this.internalStorage.get(eid);
     if (!state) {
@@ -49,7 +56,7 @@ export class AsyncContext implements OnModuleInit, OnModuleDestroy {
         `Async ID (${eid}) is not registered within internal cache.`,
       );
     }
-    return state;
+    return state as Map<K, T[K]>;
   }
 
   private static initialize() {

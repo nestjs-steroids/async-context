@@ -37,16 +37,16 @@ import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class TraceMiddleware implements NestMiddleware {
-  constructor(private readonly asyncHook: AsyncContext) {}
+  constructor(private readonly asyncHook: AsyncContext<{ traceId: string }>) {}
 
   use(req: Request, res: Response, next: NextFunction) {
     // Register AsyncContext
     // Without registration accessing to AsyncContext (get or set methods), will throw an error
     this.asyncHook.register();
     // Putting up UUID string by key 'traceId'
-    this.asyncHook.set<string, string>('traceId', uuid());
+    this.asyncHook.set('traceId', uuid());
     // Retrieving value by key
-    this.asyncContext.get<string, string>('traceId')
+    this.asyncContext.get('traceId')
     next();
   }
 }
@@ -72,11 +72,11 @@ import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class TraceInterceptor implements NestInterceptor {
-  constructor(private readonly asyncHook: AsyncContext) {}
+  constructor(private readonly asyncHook: AsyncContext<{ traceId: string }>) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     this.asyncHook.register(); // <-- Register async context
-    this.asyncHook.set<string, string>('traceId', uuid()); // <-- Define traceId
+    this.asyncHook.set('traceId', uuid()); // <-- Define traceId
     return next.handle();
   }
 }
@@ -123,7 +123,7 @@ import { AsyncContext } from '@nestjs-steroids/async-context';
 export class AppController {
   constructor(
     private readonly appService: AppService,
-    private readonly asyncContext: AsyncContext, // <-- Inject AsyncContext
+    private readonly asyncContext: AsyncContext<{ traceId: string }>, // <-- Inject AsyncContext
     private readonly logger: Logger,
   ) {}
 
@@ -131,17 +131,17 @@ export class AppController {
   getHello(): string {
     this.logger.log(
       'AppController.getHello',
-      this.asyncContext.get<string, string>('traceId'), // <-- Usage of AsyncContext
+      this.asyncContext.get('traceId'), // <-- Usage of AsyncContext
     );
     process.nextTick(() => {
       this.logger.log(
         'AppController.getHello -> nextTick',
-        this.asyncContext.get<string, string>('traceId'),
+        this.asyncContext.get('traceId'),
       );
       setTimeout(() => {
         this.logger.log(
           'AppController.getHello -> nextTick -> setTimeout',
-          this.asyncContext.get<string, string>('traceId'),
+          this.asyncContext.get('traceId'),
         );
       }, 0);
     });
