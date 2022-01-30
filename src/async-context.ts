@@ -1,69 +1,76 @@
-import { OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import * as asyncHooks from 'async_hooks'
-import { AsyncHooksHelper } from './async-hooks-helper'
-import { AsyncHooksStorage } from './async-hooks-storage'
-import {
-  AsyncContextStorageData,
-  AsyncStorageMap
-} from './async-context.interfaces'
+import { AsyncLocalStorage } from 'async_hooks'
 
-export class AsyncContext<
-  T extends AsyncContextStorageData = AsyncContextStorageData,
-  M extends AsyncStorageMap = AsyncStorageMap
-> implements OnModuleInit, OnModuleDestroy {
-  private static instance: AsyncContext;
+export class AsyncContext<K, V> implements Map<K, V> {
+  constructor (private readonly als: AsyncLocalStorage<Map<K, V>>) {}
 
-  private constructor (
-    private readonly internalStorage: M,
-    private readonly asyncHookRef: asyncHooks.AsyncHook
-  ) {}
+  private getStore (): Map<K, V> {
+    const store = this.als.getStore()
 
-  static getInstance (): AsyncContext {
-    if (this.instance === undefined) {
-      this.initialize()
-    }
-    return this.instance
-  }
-
-  onModuleInit (): void {
-    this.asyncHookRef.enable()
-  }
-
-  onModuleDestroy (): void {
-    this.asyncHookRef.disable()
-  }
-
-  set<K extends keyof T>(key: K, value: T[K]): void {
-    const store = this.getAsyncStorage()
-    store.set(key, value)
-  }
-
-  get (key: keyof T): T[keyof T] | undefined {
-    const store = this.getAsyncStorage()
-    return store.get(key)
-  }
-
-  register (): void {
-    const eid = asyncHooks.executionAsyncId()
-    this.internalStorage.set(eid, new Map())
-  }
-
-  private getAsyncStorage<K extends keyof T>(): Map<K, T[K]> {
-    const eid = asyncHooks.executionAsyncId()
-    const state = this.internalStorage.get(eid)
-    if (state === undefined) {
+    if (store === undefined) {
       throw new Error(
-        `Async ID (${eid}) is not registered within internal cache.`
+        'AsyncContext was not registered, call .register() or .registerCallback() before calling this method!'
       )
     }
-    return state as Map<K, T[K]>
+
+    return store
   }
 
-  private static initialize (): void {
-    const asyncHooksStorage = new AsyncHooksStorage()
-    const asyncHook = AsyncHooksHelper.createHooks(asyncHooksStorage)
-    const storage = asyncHooksStorage.getInternalStorage()
+  clear (): void {
+    return this.getStore().clear()
+  }
 
-    this.instance = new AsyncContext(storage, asyncHook)
+  delete (key: K): boolean {
+    return this.getStore().delete(key)
+  }
+
+  forEach (callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void {
+    return this.getStore().forEach(callbackfn, thisArg)
+  }
+
+  get (key: K): V | undefined {
+    return this.getStore().get(key)
+  }
+
+  has (key: K): boolean {
+    return this.getStore().has(key)
+  }
+
+  set (key: K, value: V): this {
+    this.getStore().set(key, value)
+    return this
+  }
+
+  get size (): number {
+    return this.getStore().size
+  }
+
+  entries (): IterableIterator<[K, V]> {
+    return this.getStore().entries()
+  }
+
+  keys (): IterableIterator<K> {
+    return this.getStore().keys()
+  }
+
+  values (): IterableIterator<V> {
+    return this.getStore().values()
+  }
+
+  [Symbol.iterator] (): IterableIterator<[K, V]> {
+    return this.getStore()[Symbol.iterator]()
+  }
+
+  [Symbol.toStringTag]: string = '[object AsyncContext]'
+
+  register (): void {
+    this.als.enterWith(new Map())
+  }
+
+  registerCallback<TArgs extends any[]>(callback: (...args: TArgs) => unknown, ...args: TArgs): void {
+    this.als.run(new Map(), callback, ...args)
+  }
+
+  unregister (): void {
+    this.als.disable()
   }
 }
