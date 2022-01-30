@@ -1,14 +1,14 @@
-import { Global, Module } from '@nestjs/common';
-import { AsyncContext } from './async-context';
+import { Global, Module } from '@nestjs/common'
+import { AsyncContext } from './async-context'
 
 @Global()
 @Module({
   providers: [
     {
       provide: AsyncContext,
-      useValue: AsyncContext.getInstance(),
-    },
+      useValue: AsyncContext.getInstance()
+    }
   ],
-  exports: [AsyncContext],
+  exports: [AsyncContext]
 })
 export class AsyncHooksModule {}

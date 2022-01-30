@@ -1,21 +1,21 @@
-import { createHook, HookCallbacks } from 'async_hooks';
-import { AsyncHooksStorage } from './async-hooks-storage';
+import { AsyncHook, createHook, HookCallbacks } from 'async_hooks'
+import { AsyncHooksStorage } from './async-hooks-storage'
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AsyncHooksHelper {
-  static createHooks(storage: AsyncHooksStorage) {
-    function init(asyncId: number, type: string, triggerId: number) {
+  static createHooks (storage: AsyncHooksStorage): AsyncHook {
+    function init (asyncId: number, type: string, triggerId: number): void {
       if (storage.has(triggerId)) {
-        storage.inherit(asyncId, triggerId);
+        storage.inherit(asyncId, triggerId)
       }
     }
 
-    function destroy(asyncId: number) {
-      storage.delete(asyncId);
+    function destroy (asyncId: number): void {
+      storage.delete(asyncId)
     }
 
-    return createHook({
-      init,
-      destroy,
-    } as HookCallbacks);
+    const callbacks: HookCallbacks = { init, destroy }
+
+    return createHook(callbacks)
   }
 }

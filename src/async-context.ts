@@ -1,11 +1,11 @@
-import { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import * as asyncHooks from 'async_hooks';
-import { AsyncHooksHelper } from './async-hooks-helper';
-import { AsyncHooksStorage } from './async-hooks-storage';
+import { OnModuleDestroy, OnModuleInit } from '@nestjs/common'
+import * as asyncHooks from 'async_hooks'
+import { AsyncHooksHelper } from './async-hooks-helper'
+import { AsyncHooksStorage } from './async-hooks-storage'
 import {
   AsyncContextStorageData,
-  AsyncStorageMap,
-} from './async-context.interfaces';
+  AsyncStorageMap
+} from './async-context.interfaces'
 
 export class AsyncContext<
   T extends AsyncContextStorageData = AsyncContextStorageData,
@@ -13,57 +13,57 @@ export class AsyncContext<
 > implements OnModuleInit, OnModuleDestroy {
   private static instance: AsyncContext;
 
-  private constructor(
+  private constructor (
     private readonly internalStorage: M,
-    private readonly asyncHookRef: asyncHooks.AsyncHook,
+    private readonly asyncHookRef: asyncHooks.AsyncHook
   ) {}
 
-  static getInstance() {
-    if (!this.instance) {
-      this.initialize();
+  static getInstance (): AsyncContext {
+    if (this.instance === undefined) {
+      this.initialize()
     }
-    return this.instance;
+    return this.instance
   }
 
-  onModuleInit() {
-    this.asyncHookRef.enable();
+  onModuleInit (): void {
+    this.asyncHookRef.enable()
   }
 
-  onModuleDestroy() {
-    this.asyncHookRef.disable();
+  onModuleDestroy (): void {
+    this.asyncHookRef.disable()
   }
 
-  set<K extends keyof T>(key: K, value: T[K]) {
-    const store = this.getAsyncStorage();
-    store.set(key, value);
+  set<K extends keyof T>(key: K, value: T[K]): void {
+    const store = this.getAsyncStorage()
+    store.set(key, value)
   }
 
-  get(key: keyof T) {
-    const store = this.getAsyncStorage();
-    return store.get(key);
+  get (key: keyof T): T[keyof T] | undefined {
+    const store = this.getAsyncStorage()
+    return store.get(key)
   }
 
-  register() {
-    const eid = asyncHooks.executionAsyncId();
-    this.internalStorage.set(eid, new Map());
+  register (): void {
+    const eid = asyncHooks.executionAsyncId()
+    this.internalStorage.set(eid, new Map())
   }
 
-  private getAsyncStorage<K extends keyof T>() {
-    const eid = asyncHooks.executionAsyncId();
-    const state = this.internalStorage.get(eid);
-    if (!state) {
+  private getAsyncStorage<K extends keyof T>(): Map<K, T[K]> {
+    const eid = asyncHooks.executionAsyncId()
+    const state = this.internalStorage.get(eid)
+    if (state === undefined) {
       throw new Error(
-        `Async ID (${eid}) is not registered within internal cache.`,
-      );
+        `Async ID (${eid}) is not registered within internal cache.`
+      )
     }
-    return state as Map<K, T[K]>;
+    return state as Map<K, T[K]>
   }
 
-  private static initialize() {
-    const asyncHooksStorage = new AsyncHooksStorage();
-    const asyncHook = AsyncHooksHelper.createHooks(asyncHooksStorage);
-    const storage = asyncHooksStorage.getInternalStorage();
+  private static initialize (): void {
+    const asyncHooksStorage = new AsyncHooksStorage()
+    const asyncHook = AsyncHooksHelper.createHooks(asyncHooksStorage)
+    const storage = asyncHooksStorage.getInternalStorage()
 
-    this.instance = new AsyncContext(storage, asyncHook);
+    this.instance = new AsyncContext(storage, asyncHook)
   }
 }
