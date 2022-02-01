@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'async_hooks'
 
 export class AsyncContext<K, V> implements Map<K, V> {
-  constructor (private readonly als: AsyncLocalStorage<Map<K, V>>) {}
+  constructor (readonly als: AsyncLocalStorage<Map<K, V>>) {}
 
   private getStore (): Map<K, V> {
     const store = this.als.getStore()
@@ -66,8 +66,8 @@ export class AsyncContext<K, V> implements Map<K, V> {
     this.als.enterWith(new Map())
   }
 
-  registerCallback<TArgs extends any[]>(callback: (...args: TArgs) => unknown, ...args: TArgs): void {
-    this.als.run(new Map(), callback, ...args)
+  registerCallback<R, TArgs extends any[]>(callback: (...args: TArgs) => R, ...args: TArgs): R {
+    return this.als.run<R, TArgs>(new Map(), callback, ...args)
   }
 
   unregister (): void {
