@@ -13,14 +13,14 @@ function getProviderValueFromModule <T> (acm: DynamicModule): T | undefined {
   return provider.useValue
 }
 
-describe('AsyncContextModule class', () => {
+describe('AsyncContextModule', () => {
   describe('#forRoot', () => {
-    it("should use 'true' as default value for 'global' property", () => {
+    it("should use 'true' as default value for 'global' module property", () => {
       const acm = AsyncContextModule.forRoot()
       expect(acm.global).toStrictEqual(true)
     })
 
-    it("should user 'isGlobal' option for 'global' property", () => {
+    it("should use 'isGlobal' option for 'global' module property", () => {
       const acm = AsyncContextModule.forRoot({ isGlobal: false })
       expect(acm.global).toStrictEqual(false)
     })

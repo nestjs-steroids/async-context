@@ -66,8 +66,8 @@ export class AsyncContext<K, V> implements Map<K, V> {
     this.als.enterWith(new Map())
   }
 
-  registerCallback<TArgs extends any[]>(callback: (...args: TArgs) => unknown, ...args: TArgs): void {
-    this.als.run(new Map(), callback, ...args)
+  registerCallback<R, TArgs extends any[]>(callback: (...args: TArgs) => R, ...args: TArgs): R {
+    return this.als.run<R, TArgs>(new Map(), callback, ...args)
   }
 
   unregister (): void {
