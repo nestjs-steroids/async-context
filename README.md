@@ -1,171 +1,162 @@
 <h1 align="center">Async Context</h1>
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/@nestjs-steroids/async-context">
-    <img alt="GitHub package.json version" src="https://img.shields.io/github/package-json/v/nestjs-steroids/async-context">
-  </a>
-  <a href="https://snyk.io/test/github/nestjs-steroids/async-context?targetFile=package.json">
-    <img src="https://snyk.io/test/github/nestjs-steroids/async-context/badge.svg?targetFile=package.json" alt="Known Vulnerabilities" data-canonical-src="https://snyk.io/test/github/nestjs-steroids/async-context?targetFile=package.json" style="max-width:100%;">
-  </a>
-</p>
+Zero-dependency module for NestJS that allow to track context between async call
 
 ## Installation
 ```bash
 npm install @nestjs-steroids/async-context
+yarn add @nestjs-steroids/async-context
+pnpm install @nestjs-steroids/async-context
 ```
 
 ## Usage
-### AsyncHooksModule
+The first step is to register `AsyncContext` inside interceptor (or middleware)
+> `src/async-context.interceptor.ts`
 ```typescript
-import { Module } from '@nestjs/common';
-import { AsyncHooksModule } from '@nestjs-steroids/async-context';
-
-@Module({
-  imports: [
-    AsyncHooksModule
-  ],
-})
-export class AppModule {}
-```
-
-### AsyncContext
-```typescript
-import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
-import { AsyncContext } from '@nestjs-steroids/async-context';
-import { v4 as uuid } from 'uuid';
-
-@Injectable()
-export class TraceMiddleware implements NestMiddleware {
-  constructor(private readonly asyncHook: AsyncContext<{ traceId: string }>) {}
-
-  use(req: Request, res: Response, next: NextFunction) {
-    // Register AsyncContext
-    // Without registration accessing to AsyncContext (get or set methods), will throw an error
-    this.asyncHook.register();
-    // Putting up UUID string by key 'traceId'
-    this.asyncHook.set('traceId', uuid());
-    // Retrieving value by key
-    this.asyncContext.get('traceId')
-    next();
-  }
-}
-```
-
-## Example (traceId or requestId)
-
-Let's track `traceId` in every log message.
-
-First of all define trace interceptor than register async context
-
-> **trace.interceptor.ts**
-```typescript
+import { randomUUID } from 'crypto'
 import {
   Injectable,
   NestInterceptor,
   ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { AsyncContext } from '@nestjs-steroids/async-context';
-import { v4 as uuid } from 'uuid';
+  CallHandler
+} from '@nestjs/common'
+import { AsyncContext } from '@nestjs-steroids/async-context'
+import { Observable } from 'rxjs'
 
 @Injectable()
-export class TraceInterceptor implements NestInterceptor {
-  constructor(private readonly asyncHook: AsyncContext<{ traceId: string }>) {}
+export class AsyncContextInterceptor implements NestInterceptor {
+  constructor (private readonly ac: AsyncContext<string, any>) {}
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    this.asyncHook.register(); // <-- Register async context
-    this.asyncHook.set('traceId', uuid()); // <-- Define traceId
-    return next.handle();
+  intercept (context: ExecutionContext, next: CallHandler): Observable<any> {
+    this.ac.register() // Important to call .register or .registerCallback (good for middleware)
+    this.ac.set('traceId', randomUUID()) // Setting default value traceId
+    return next.handle()
   }
 }
 ```
 
-Then we need to register `AsyncHooksModule` and `TraceInterceptor`
-
-> **app.module.ts**
+The second step is to register `AsyncContextModule` and interceptor inside main module
+> `src/app.module.ts`
 ```typescript
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { Logger, Module } from '@nestjs/common';
-import { AsyncHooksModule } from '@nestjs-steroids/async-context';
-import { TraceInterceptor } from './trace.interceptor';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { Module } from '@nestjs/common';
+import { AsyncContextModule } from '@nestjs-steroids/async-context';
+import { AsyncContextInterceptor } from './async-context.interceptor';
 
 @Module({
-  imports: [AsyncHooksModule], // <-- Register AsyncHooksModule
-  controllers: [AppController],
+  imports: [
+    AsyncContextModule.forRoot()
+  ],
   providers: [
     {
-      provide: Logger,
-      useValue: new Logger(),
-    },
-    { // <-- Setup interceptor for entire module
       provide: APP_INTERCEPTOR,
-      useClass: TraceInterceptor,
+      useClass: AsyncContextInterceptor,
     },
-    AppService,
   ],
 })
 export class AppModule {}
 ```
-
-Last step, inject `AsyncContex` into controller, service, etc... and use it
-
-> **app.controller.ts**
+The last step is to inject `AsyncContext` inside controller or service and use it
+> ``src/app.controller.ts``
 ```typescript
-import { Controller, Get, Logger } from '@nestjs/common';
-import { AppService } from './app.service';
-import { AsyncContext } from '@nestjs-steroids/async-context';
+import { Controller, Get, Logger } from '@nestjs/common'
+import { AppService } from './app.service'
+import { AsyncContext } from '@nestjs-steroids/async-context'
 
 @Controller()
 export class AppController {
-  constructor(
+  constructor (
     private readonly appService: AppService,
-    private readonly asyncContext: AsyncContext<{ traceId: string }>, // <-- Inject AsyncContext
-    private readonly logger: Logger,
+    private readonly asyncContext: AsyncContext<string, string>,
+    private readonly logger: Logger
   ) {}
 
   @Get()
-  getHello(): string {
-    this.logger.log(
-      'AppController.getHello',
-      this.asyncContext.get('traceId'), // <-- Usage of AsyncContext
-    );
+  getHello (): string {
+    this.logger.log('AppController.getHello', this.asyncContext.get('traceId'))
     process.nextTick(() => {
       this.logger.log(
         'AppController.getHello -> nextTick',
-        this.asyncContext.get('traceId'),
-      );
+        this.asyncContext.get('traceId')
+      )
       setTimeout(() => {
         this.logger.log(
           'AppController.getHello -> nextTick -> setTimeout',
-          this.asyncContext.get('traceId'),
-        );
-      }, 0);
-    });
-    return this.appService.getHello();
+          this.asyncContext.get('traceId')
+        )
+      }, 0)
+    })
+    return this.appService.getHello()
   }
 }
-```
-
-### Result example
 
 ```
-[Nest] 30483   - 07/04/2020, 12:21:06 PM   [NestFactory] Starting Nest application...
-[Nest] 30483   - 07/04/2020, 12:21:06 PM   [InstanceLoader] AsyncHooksModule dependencies initialized +8ms
-[Nest] 30483   - 07/04/2020, 12:21:06 PM   [InstanceLoader] AppModule dependencies initialized +0ms
-[Nest] 30483   - 07/04/2020, 12:21:06 PM   [RoutesResolver] AppController {}: +3ms
-[Nest] 30483   - 07/04/2020, 12:21:06 PM   [RouterExplorer] Mapped {, GET} route +1ms
-[Nest] 30483   - 07/04/2020, 12:21:06 PM   [NestApplication] Nest application successfully started +2ms
-[Nest] 30483   - 07/04/2020, 12:21:11 PM   [1cf8ad02-7bae-4fa7-963d-66238c94abd3] AppController.getHello
-[Nest] 30483   - 07/04/2020, 12:21:11 PM   [1cf8ad02-7bae-4fa7-963d-66238c94abd3] AppController.getHello -> nextTick
-[Nest] 30483   - 07/04/2020, 12:21:11 PM   [1cf8ad02-7bae-4fa7-963d-66238c94abd3] AppController.getHello -> nextTick -> setTimeout
+
+## Output example
+
+```
+[Nest] 141168  - 02/01/2022, 11:33:11 PM     LOG [NestFactory] Starting Nest application...
+[Nest] 141168  - 02/01/2022, 11:33:11 PM     LOG [InstanceLoader] AsyncContextModule dependencies initialized +47ms
+[Nest] 141168  - 02/01/2022, 11:33:11 PM     LOG [InstanceLoader] AppModule dependencies initialized +1ms
+[Nest] 141168  - 02/01/2022, 11:33:11 PM     LOG [RoutesResolver] AppController {/}: +12ms
+[Nest] 141168  - 02/01/2022, 11:33:11 PM     LOG [RouterExplorer] Mapped {/, GET} route +7ms
+[Nest] 141168  - 02/01/2022, 11:33:11 PM     LOG [NestApplication] Nest application successfully started +5ms
+[Nest] 141168  - 02/01/2022, 11:33:13 PM     LOG [7398d3ad-c246-4650-8dd0-f8f29238bdd7] AppController.getHello
+[Nest] 141168  - 02/01/2022, 11:33:13 PM     LOG [7398d3ad-c246-4650-8dd0-f8f29238bdd7] AppController.getHello -> nextTick
+[Nest] 141168  - 02/01/2022, 11:33:13 PM     LOG [7398d3ad-c246-4650-8dd0-f8f29238bdd7] AppController.getHello -> nextTick -> setTimeout
+```
+
+## API
+
+### `AsyncContext` almost identical to native `Map` object
+```typescript
+class AsyncContext {
+  // Clear all values from storage
+  clear(): void;
+
+  // Delete value by key from storage
+  delete(key: K): boolean;
+
+  // Iterate over storage
+  forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void;
+
+  // Get value from storage by key
+  get(key: K): V | undefined;
+
+  // Check if key exists in storage
+  has(key: K): boolean;
+
+  // Set value by key in storage
+  set(key: K, value: V): this;
+
+  // Get number of keys that stored in storage
+  get size: number;
+
+  // Register context, it's better to use this method inside the interceptor
+  register(): void
+
+  // Register context for a callback, it's better to use this inside the middleware
+  registerCallback<R, TArgs extends any[]>(callback: (...args: TArgs) => R, ...args: TArgs): R
+
+  // Unregister context
+  unregister(): void
+}
+
+```
+### `AsyncContextModule`
+```typescript
+interface AsyncContextModuleOptions {
+  // Should register this module as global, default: true
+  isGlobal?: boolean
+
+  // In case if you need to provide custom value AsyncLocalStorage
+  alsInstance?: AsyncLocalStorage<any>
+}
+
+class AsyncContextModule {
+  static forRoot (options?: AsyncContextModuleOptions): DynamicModule
+}
 ```
 
 ## License
 [MIT](LICENSE.md)
-
-## Thinks TODO:
-- [ ] Add tests
