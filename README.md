@@ -158,5 +158,8 @@ class AsyncContextModule {
 }
 ```
 
+## Migration guide from V1
+You need to replace `AsyncHooksModule` by `AsyncContextModule.forRoot()`
+
 ## License
 [MIT](LICENSE.md)
